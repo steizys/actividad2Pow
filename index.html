@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="theme-switch-wrapper">
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle" onchange="toggleDarkMode()">
+            <span class="slider"></span>
+        </label>
+    </div>
+    
+    <div id="auth-container">
+        <form id="login-form">
+            <h2>Inicio de Sesión</h2>
+            <input type="email" placeholder="Correo" required>
+            <input type="password" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+            <p onclick="showForm('register-form')">¿No tienes cuenta? Regístrate</p>
+            <p onclick="showForm('recovery-form')">¿Olvidaste tu contraseña?</p>
+        </form>
+
+        <form id="register-form" style="display:none;">
+            <h2>Registro</h2>
+            <input type="text" placeholder="Nombre completo" required>
+            <input type="email" placeholder="Correo" required>
+            <input type="password" placeholder="Contraseña" required>
+            <button type="submit">Registrarse</button>
+            <p onclick="showForm('login-form')">Volver al Login</p>
+        </form>
+
+        <form id="recovery-form" style="display:none;">
+            <h2>Recuperar Contraseña</h2>
+            <input type="email" placeholder="Ingresa tu correo" required>
+            <button type="submit">Enviar instrucciones</button>
+            <p onclick="showForm('login-form')">Volver al Login</p>
+        </form>
+    </div>
+
+    <section id="character-module" style="display: none;">
+        <h2>Gestión de Personajes</h2>
+        <input type="text" id="search-input" placeholder="Buscar por nombre..." oninput="filterCharacters()">
+        <div class="table-container">
+            <table id="character-table">
+                <thead>
+                    <tr><th onclick="sortTable(0)">ID</th><th onclick="sortTable(1)">Nombre</th><th onclick="sortTable(2)">Especie</th><th onclick="sortTable(3)">Género</th></tr>
+                </thead>
+                <tbody id="character-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
