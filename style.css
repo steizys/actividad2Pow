@@ -228,3 +228,84 @@ tr:hover {
 @media (max-width: 480px) {
     #auth-container, #character-module { padding: 1.5rem; }
 }
+/* Contenedor de detalles en rejilla */
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    text-align: left;
+    margin-top: 15px;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-field.full-width {
+    grid-column: span 2;
+}
+
+.modal-field label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-main);
+    opacity: 0.6;
+    margin-bottom: 4px;
+}
+
+.modal-field span, .modal-field a {
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+/* Tarjeta Neo-brutalista de Preview */
+.preview-card {
+    background: var(--bg-color);
+    border: var(--border-style);
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 4px 4px 0px #000;
+    text-align: left;
+}
+
+.preview-card img {
+    width: 65px;
+    height: 65px;
+    border-radius: 8px;
+    border: 2px solid #000;
+    object-fit: cover;
+}
+
+.preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+/* Cabecera del modal del personaje */
+.character-modal-header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.character-modal-header img {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    border: var(--border-style);
+    box-shadow: 4px 4px 0px #000;
+}
+
+@media (max-width: 480px) {
+    .character-modal-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}

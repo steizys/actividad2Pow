@@ -54,7 +54,15 @@ function showSection(sectionId) {
     }
     document.getElementById(sectionId).style.display = 'block';
 }
-
+function showForm(formId) {
+    // 1. Ocultar todos los formularios dentro del contenedor de autenticación
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('recovery-form').style.display = 'none';
+    
+    // 2. Mostrar únicamente el formulario solicitado
+    document.getElementById(formId).style.display = 'block';
+}
 function filterCharacters() {
     const filter = document.getElementById('search-input').value.toLowerCase();
     
@@ -146,47 +154,244 @@ function renderCharacters(chars) {
         </tr>
     `).join('');
 }
-
+function renderEpisodes(eps) {
+    const body = document.getElementById('episodes-body');
+    console.log("Renderizando episodios:", eps);
+    body.innerHTML = eps.map(e => `
+       
+        <tr onclick="openDetails(${e.id}, 'episodes-modal')" style="cursor:pointer;">
+            <td>${e.id}</td>
+            <td>${e.name}</td>
+            <td>${e.air_date}</td>
+            <td>${e.episode}</td>
+        </tr>
+    `).join('');
+}
 
 function openDetails(id, type) {
     const data = (type === 'character-modal') ? allCharacters : allEpisodes;
     const item = data.find(c => c.id === id);
     const modal = document.getElementById(type);
     
-    // Inyectar HTML según el tipo
-    const modalBody = modal.querySelector('#modal-body');
     if (type === 'character-modal') {
+        const modalBody = document.getElementById('modal-body-characters');
+        
+        // Determinar color del indicador de estado
+        const statusColor = item.status === 'Alive' ? '#97ce4c' : item.status === 'Dead' ? '#ff7675' : '#style-disabled';
+
         modalBody.innerHTML = `
-            <img src="${item.image}" style="width:150px; border-radius:10px;">
-            <p><strong>Nombre:</strong> <input type="text" id="edit-name" value="${item.name}"></p>
+            <div class="character-modal-header">
+                <img src="${item.image}" alt="${item.name}">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <div class="modal-field">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="edit-name" value="${item.name}" style="margin: 4px 0 0 0;">
+                    </div>
+                    <div class="modal-field">
+                        <label>Estado de Vida</label>
+                        <span style="font-weight: bold; color: ${statusColor}; font-size: 1.1rem;">
+                            ● ${item.status === 'Alive' ? 'Vivo' : item.status === 'Dead' ? 'Muerto' : 'Desconocido'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-grid">
+                <div class="modal-field">
+                    <label>Especie</label>
+                    <span>${item.species || 'No especificada'}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Género</label>
+                    <span>${item.gender || 'No especificado'}</span>
+                </div>
+                <div class="modal-field full-width">
+                    <label>Subtipo / Variante</label>
+                    <span>${item.type || 'Ninguno (Normal)'}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Origen</label>
+                    <span>${item.origin && item.origin.name ? item.origin.name : 'Desconocido'}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Ubicación Actual</label>
+                    <span>${item.location && item.location.name ? item.location.name : 'Desconocida'}</span>
+                </div>
+                <div class="modal-field full-width">
+                    <label>Apariciones en Pantalla</label>
+                    <span>Presente en ${item.episode ? item.episode.length : 0} episodios</span>
+                </div>
+            </div>
+
+            <!-- Preview Dinámico: Primer episodio en el que debutó -->
+            <div style="margin-top: 15px; text-align: left;">
+                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; opacity: 0.6;">Debut del Personaje</span>
+                <div id="episode-preview-container">
+                    <div class="preview-card" style="justify-content: center; font-size: 0.9rem; opacity: 0.7;">
+                        Cargando episodio de origen...
+                    </div>
+                </div>
+            </div>
         `;
+
+        // Hacer fetch al primer episodio del arreglo (debut)
+        if (item.episode && item.episode.length > 0) {
+            fetchEpisodePreview(item.episode[0]);
+        } else {
+            document.getElementById('episode-preview-container').innerHTML = `
+                <div class="preview-card" style="justify-content: center; opacity: 0.6;">
+                    Este personaje no está registrado en ningún episodio.
+                </div>`;
+        }
+
     } else {
+        // Lógica de episodios (mantén la que hicimos en el paso anterior)
+        const modalBody = document.getElementById('modal-body-episodes');
+        const creationDate = new Date(item.created).toLocaleString('es-ES', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
         modalBody.innerHTML = `
-            <p><strong>Nombre:</strong> <input type="text" id="edit-name" value="${item.name}"></p>
-            <p><strong>Episodio:</strong> ${item.episode}</p>
+            <div class="modal-field full-width">
+                <label>Nombre del Episodio</label>
+                <input type="text" id="edit-name" value="${item.name}" style="margin: 4px 0 0 0;">
+            </div>
+            <div class="modal-grid">
+                <div class="modal-field">
+                    <label>ID de Registro</label>
+                    <span>#${item.id}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Código de Episodio</label>
+                    <span style="font-family: monospace; font-weight: bold; color: var(--accent);">${item.episode}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Fecha de Estreno</label>
+                    <span>${item.air_date}</span>
+                </div>
+                <div class="modal-field">
+                    <label>Total Personajes</label>
+                    <span>${item.characters ? item.characters.length : 0} presentes</span>
+                </div>
+                <div class="modal-field full-width">
+                    <label>Fecha del Sistema (created)</label>
+                    <span style="font-size: 0.85rem;">${creationDate}</span>
+                </div>
+                <div class="modal-field full-width">
+                    <label>URL de la API</label>
+                    <a href="${item.url}" target="_blank" style="font-size: 0.8rem; word-break: break-all; color: var(--accent); font-family: monospace;">${item.url}</a>
+                </div>
+            </div>
+            <div style="margin-top: 15px; text-align: left;">
+                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; opacity: 0.6;">Personaje Destacado</span>
+                <div id="character-preview-container">
+                    <div class="preview-card" style="justify-content: center; font-size: 0.9rem; opacity: 0.7;">
+                        Cargando personaje...
+                    </div>
+                </div>
+            </div>
         `;
+
+        if (item.characters && item.characters.length > 0) {
+            const randomUrl = item.characters[Math.floor(Math.random() * item.characters.length)];
+            fetchCharacterPreview(randomUrl);
+        }
     }
     
     modal.style.display = 'flex';
     modal.dataset.currentId = id;
-    modal.dataset.type = type; // Guardamos el tipo para saber qué guardar luego
+    modal.dataset.type = type;
 }
+
+// Nueva función complementaria para traer los datos del episodio en la vista de personajes
+async function fetchEpisodePreview(url) {
+    const container = document.getElementById('episode-preview-container');
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error();
+        const ep = await res.json();
+        
+        container.innerHTML = `
+            <div class="preview-card">
+                <div style="background: var(--accent); padding: 10px; border-radius: 8px; border: 2px solid #000; font-weight: 900; font-family: monospace; font-size: 1.1rem; color: #000; min-width: 60px; text-align: center;">
+                    ${ep.episode}
+                </div>
+                <div class="preview-info">
+                    <span style="font-weight: 800; font-size: 1.05rem;">${ep.name}</span>
+                    <span style="font-size: 0.85rem; opacity: 0.8;">📅 Estreno: ${ep.air_date}</span>
+                    <span style="font-size: 0.75rem; opacity: 0.6;">🎬 Primer avistamiento en el show</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="preview-card" style="justify-content: center; color: #ff7675;">
+                No se pudo cargar el preview del episodio (Modo Offline).
+            </div>
+        `;
+    }
+}
+
+// Nueva función complementaria para traer los datos del preview
+async function fetchCharacterPreview(url) {
+    const container = document.getElementById('character-preview-container');
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error();
+        const char = await res.json();
+        
+        container.innerHTML = `
+            <div class="preview-card">
+                <img src="${char.image}" alt="${char.name}">
+                <div class="preview-info">
+                    <span style="font-weight: 800; font-size: 1.05rem;">${char.name}</span>
+                    <span style="font-size: 0.85rem; opacity: 0.8;">🧬 ${char.species} — 👤 ${char.gender}</span>
+                    <span style="font-size: 0.8rem; color: ${char.status === 'Alive' ? '#97ce4c' : char.status === 'Dead' ? '#ff7675' : '#ccc'}; font-weight: bold;">
+                        ● ${char.status === 'Alive' ? 'Vivo' : char.status === 'Dead' ? 'Muerto' : 'Desconocido'}
+                    </span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="preview-card" style="justify-content: center; color: #ff7675;">
+                No se pudo cargar la vista previa (Modo Offline).
+            </div>
+        `;
+    }
+}
+
 function saveChanges() {
-    const modal = document.querySelector('[style*="display: flex"]'); // Captura el modal abierto
-    const id = modal.dataset.currentId;
-    const type = modal.dataset.type;
+    // 1. Identificar qué modal está visible
+    const modalCharacter = document.getElementById('character-modal');
+    const modalEpisodes = document.getElementById('episodes-modal');
+    
+    // Determinamos cuál es el modal activo
+    const modal = (modalCharacter.style.display === 'flex') ? modalCharacter : modalEpisodes;
+    const type = modal.id; // 'character-modal' o 'episodes-modal'
+    
+    // 2. Obtener los datos
+    const id = parseInt(modal.dataset.currentId);
     const newName = document.getElementById('edit-name').value;
     
+    console.log(`Guardando en ${type}, ID: ${id}, Nombre: ${newName}`);
+
+    // 3. Lógica de guardado
     if (type === 'character-modal') {
         const char = allCharacters.find(c => c.id == id);
-        char.name = newName;
-        renderCharacters(allCharacters);
+        if (char) {
+            char.name = newName;
+            renderCharacters(allCharacters);
+        }
     } else {
         const ep = allEpisodes.find(e => e.id == id);
-        ep.name = newName;
-        renderEpisodes(allEpisodes);
+        if (ep) {
+            ep.name = newName;
+            renderEpisodes(allEpisodes);
+        }
     }
     
+    // 4. Cerrar el modal correcto
     modal.style.display = 'none';
 }
 
@@ -218,18 +423,7 @@ async function fetchEpisodes() {
         }
     }
 }
-function renderEpisodes(eps) {
-    const body = document.getElementById('episodes-body');
-    console.log("Renderizando episodios:", eps);
-    body.innerHTML = eps.map(e => `
-        <tr onclick="openDetails(${e.id}, 'episodes-modal')" style="cursor:pointer;">
-            <td>${e.id}</td>
-            <td>${e.name}</td>
-            <td>${e.air_date}</td>
-            <td>${e.episode}</td>
-        </tr>
-    `).join('');
-}
+
 // Inicialización
 window.onload = () => {
     if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
