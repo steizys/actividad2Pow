@@ -1,14 +1,77 @@
-// Al hacer Login, mostramos solo lo necesario
+// Usuarios simulados (se guardan en localStorage para persistir entre recargas)
+function getUsers() {
+    const stored = localStorage.getItem('registeredUsers');
+    if (stored) return JSON.parse(stored);
+    // Usuario de prueba por defecto
+    const defaultUsers = [{ name: "Admin", email: "admin@rm.com", password: "1234" }];
+    localStorage.setItem('registeredUsers', JSON.stringify(defaultUsers));
+    return defaultUsers;
+}
+
+// Al hacer Login, validamos contra los usuarios registrados
 document.getElementById('login-form').addEventListener('submit', function(e) {
     e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    const users = getUsers();
+    const found = users.find(u => u.email === email && u.password === password);
+
+    if (!found) {
+        alert("Correo o contraseña incorrectos.");
+        return;
+    }
+
     // Ocultar Auth
     document.getElementById('auth-container').style.display = 'none';
-    
+
     // Mostrar Nav y Módulo
     document.getElementById('navbar').style.display = 'flex';
     document.getElementById('character-module').style.display = 'block';
-    
+
     fetchCharacters();
+});
+
+// Registro de nuevos usuarios (simulado, se guarda en localStorage)
+document.getElementById('register-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+
+    const users = getUsers();
+
+    if (users.some(u => u.email === email)) {
+        alert("Ya existe una cuenta con ese correo.");
+        return;
+    }
+
+    users.push({ name, email, password });
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+    alert("Cuenta creada con éxito. Ahora puedes iniciar sesión.");
+    document.getElementById('register-form').reset();
+    showForm('login-form');
+});
+
+// Recuperación de contraseña (simulada, sin backend real)
+document.getElementById('recovery-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('recovery-email').value;
+    const messageEl = document.getElementById('recovery-message');
+
+    const users = getUsers();
+    const found = users.find(u => u.email === email);
+
+    messageEl.style.display = 'block';
+
+    if (found) {
+        messageEl.style.color = 'var(--text-main)';
+        messageEl.textContent = "Tu contraseña es: " + found.password;
+    } else {
+        messageEl.style.color = '#ff7675';
+        messageEl.textContent = "No existe ninguna cuenta registrada con ese correo.";
+    }
 });
 
 // Función de salida (Logout)
@@ -34,13 +97,6 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
 
-// Lógica de Login
-document.getElementById('login-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    document.getElementById('auth-container').style.display = 'none';
-    document.getElementById('character-module').style.display = 'block';
-    fetchCharacters();
-});
 function showSection(sectionId) {
     // Ocultar todas las secciones
     document.getElementById('character-module').style.display = 'none';
@@ -60,11 +116,16 @@ function showForm(formId) {
     document.getElementById('register-form').style.display = 'none';
     document.getElementById('recovery-form').style.display = 'none';
     
+    // Limpiar el mensaje de recuperación al cambiar de formulario
+    const messageEl = document.getElementById('recovery-message');
+    messageEl.style.display = 'none';
+    messageEl.textContent = '';
+    
     // 2. Mostrar únicamente el formulario solicitado
     document.getElementById(formId).style.display = 'block';
 }
 function filterCharacters() {
-    const filter = document.getElementById('search-input').value.toLowerCase();
+    const filter = document.getElementById('search-characters').value.toLowerCase();
     
     // 2. Obtener todas las filas del cuerpo de la tabla
     const tableBody = document.getElementById('character-body');
@@ -83,6 +144,28 @@ function filterCharacters() {
                 rows[i].style.display = ""; // Se muestra
             } else {
                 rows[i].style.display = "none"; // Se oculta
+            }
+        }
+    }
+}
+
+// Buscador de episodios (misma lógica que el de personajes)
+function filterEpisodes() {
+    const filter = document.getElementById('search-episodes').value.toLowerCase();
+
+    const tableBody = document.getElementById('episodes-body');
+    const rows = tableBody.getElementsByTagName('tr');
+
+    for (let i = 0; i < rows.length; i++) {
+        const nameCell = rows[i].getElementsByTagName('td')[1];
+
+        if (nameCell) {
+            const nameValue = nameCell.textContent.toLowerCase();
+
+            if (nameValue.indexOf(filter) > -1) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
             }
         }
     }
@@ -141,7 +224,7 @@ async function fetchCharacters() {
             renderCharacters(allCharacters);
             alert("Estás trabajando en modo offline con datos guardados.");
         } else {
-            body.innerHTML = "<tr><td colspan='4'>No hay datos disponibles sin conexión.</td></tr>";
+            body.innerHTML = "<tr><td colspan='5'>No hay datos disponibles sin conexión.</td></tr>";
         }
     }
 }
@@ -150,7 +233,7 @@ function renderCharacters(chars) {
     const body = document.getElementById('character-body');
     body.innerHTML = chars.map(c => `
         <tr onclick="openDetails(${c.id}, 'character-modal')" style="cursor:pointer;">
-            <td>${c.id}</td><td>${c.name}</td><td>${c.species}</td><td>${c.gender}</td>
+            <td>${c.id}</td><td>${c.name}</td><td>${c.species}</td><td>${c.gender}</td><td>${c.type || 'Ninguno'}</td>
         </tr>
     `).join('');
 }
@@ -199,15 +282,15 @@ function openDetails(id, type) {
             <div class="modal-grid">
                 <div class="modal-field">
                     <label>Especie</label>
-                    <span>${item.species || 'No especificada'}</span>
+                    <input type="text" id="edit-species" value="${item.species || ''}" style="margin: 4px 0 0 0;">
                 </div>
                 <div class="modal-field">
                     <label>Género</label>
-                    <span>${item.gender || 'No especificado'}</span>
+                    <input type="text" id="edit-gender" value="${item.gender || ''}" style="margin: 4px 0 0 0;">
                 </div>
                 <div class="modal-field full-width">
                     <label>Subtipo / Variante</label>
-                    <span>${item.type || 'Ninguno (Normal)'}</span>
+                    <input type="text" id="edit-type" value="${item.type || ''}" style="margin: 4px 0 0 0;">
                 </div>
                 <div class="modal-field">
                     <label>Origen</label>
@@ -267,7 +350,7 @@ function openDetails(id, type) {
                 </div>
                 <div class="modal-field">
                     <label>Fecha de Estreno</label>
-                    <span>${item.air_date}</span>
+                    <input type="text" id="edit-air-date" value="${item.air_date}" style="margin: 4px 0 0 0;">
                 </div>
                 <div class="modal-field">
                     <label>Total Personajes</label>
@@ -381,12 +464,16 @@ function saveChanges() {
         const char = allCharacters.find(c => c.id == id);
         if (char) {
             char.name = newName;
+            char.species = document.getElementById('edit-species').value;
+            char.gender = document.getElementById('edit-gender').value;
+            char.type = document.getElementById('edit-type').value;
             renderCharacters(allCharacters);
         }
     } else {
         const ep = allEpisodes.find(e => e.id == id);
         if (ep) {
             ep.name = newName;
+            ep.air_date = document.getElementById('edit-air-date').value;
             renderEpisodes(allEpisodes);
         }
     }
@@ -423,8 +510,3 @@ async function fetchEpisodes() {
         }
     }
 }
-
-// Inicialización
-window.onload = () => {
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
-};

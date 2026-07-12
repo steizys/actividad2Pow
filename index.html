@@ -23,8 +23,8 @@
     <div id="auth-container">
         <form id="login-form">
             <h2>Inicio de Sesión</h2>
-            <input type="email" placeholder="Correo" required>
-            <input type="password" placeholder="Contraseña" required>
+            <input type="email" id="login-email" placeholder="Correo" required>
+            <input type="password" id="login-password" placeholder="Contraseña" required>
             <button type="submit">Entrar</button>
             <p onclick="showForm('register-form')">¿No tienes cuenta? Regístrate</p>
             <p onclick="showForm('recovery-form')">¿Olvidaste tu contraseña?</p>
@@ -32,28 +32,29 @@
 
         <form id="register-form" style="display:none;">
             <h2>Registro</h2>
-            <input type="text" placeholder="Nombre completo" required>
-            <input type="email" placeholder="Correo" required>
-            <input type="password" placeholder="Contraseña" required>
+            <input type="text" id="register-name" placeholder="Nombre completo" required>
+            <input type="email" id="register-email" placeholder="Correo" required>
+            <input type="password" id="register-password" placeholder="Contraseña" required>
             <button type="submit">Registrarse</button>
             <p onclick="showForm('login-form')">Volver al Login</p>
         </form>
 
         <form id="recovery-form" style="display:none;">
             <h2>Recuperar Contraseña</h2>
-            <input type="email" placeholder="Ingresa tu correo" required>
+            <input type="email" id="recovery-email" placeholder="Ingresa tu correo" required>
             <button type="submit">Enviar instrucciones</button>
+            <p id="recovery-message" style="display:none; color: var(--text-main); font-weight: 800;"></p>
             <p onclick="showForm('login-form')">Volver al Login</p>
         </form>
     </div>
 
     <section id="character-module" style="display: none;">
         <h2>Gestión de Personajes</h2>
-        <input type="text" id="search-input" placeholder="Buscar por nombre..." oninput="filterCharacters()">
+        <input type="text" id="search-characters" placeholder="Buscar por nombre..." oninput="filterCharacters()">
         <div class="table-container">
             <table id="character-table">
                 <thead>
-                    <tr><th onclick="sortTable(0, 'character-table')">ID</th><th onclick="sortTable(1, 'character-table')">Nombre</th><th onclick="sortTable(2, 'character-table')">Especie</th><th onclick="sortTable(3, 'character-table')">Género</th></tr>
+                    <tr><th onclick="sortTable(0, 'character-table')">ID</th><th onclick="sortTable(1, 'character-table')">Nombre</th><th onclick="sortTable(2, 'character-table')">Especie</th><th onclick="sortTable(3, 'character-table')">Género</th><th onclick="sortTable(4, 'character-table')">Tipo</th></tr>
                 </thead>
                 <tbody id="character-body"></tbody>
             </table>
@@ -74,7 +75,7 @@
     </div>
     <section id="episodes-module" style="display: none;">
         <h2>Gestión de Episodios</h2>
-        <input type="text" id="search-input" placeholder="Buscar por nombre..." oninput="filterEpisodes()">
+        <input type="text" id="search-episodes" placeholder="Buscar por nombre..." oninput="filterEpisodes()">
         <div class="table-container">
             <table id="episodes-table">
                 <thead>

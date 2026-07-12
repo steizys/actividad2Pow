@@ -225,8 +225,19 @@ tr:hover {
     margin: 5px 0;
 }
 
+@media (max-width: 768px) {
+    #character-module, #episodes-module { padding: 1.2rem; margin: 15px; }
+    th, td { padding: 8px; font-size: 0.9rem; }
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-field.full-width { grid-column: span 1; }
+}
+
 @media (max-width: 480px) {
     #auth-container, #character-module { padding: 1.5rem; }
+    #navbar { flex-direction: column; gap: 10px; padding: 10px; }
+    #navbar > div:last-child { flex-wrap: wrap; justify-content: center; }
+    body { padding-top: 130px; }
+    th, td { padding: 6px; font-size: 0.8rem; }
 }
 /* Contenedor de detalles en rejilla */
 .modal-grid {
