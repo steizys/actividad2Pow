@@ -1,6 +1,6 @@
-// Usuarios simulados (se guardan en localStorage para persistir entre recargas)
+//usuarios registrados 
 function getUsers() {
-    const stored = localStorage.getItem('registeredUsers');
+    const stored = localStorage.getItem('registeredUsers'); //obtiene los usuarios del localstorage 
     if (stored) return JSON.parse(stored);
     // Usuario de prueba por defecto
     const defaultUsers = [{ name: "Admin", email: "admin@rm.com", password: "1234" }];
@@ -15,7 +15,7 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
     const password = document.getElementById('login-password').value;
 
     const users = getUsers();
-    const found = users.find(u => u.email === email && u.password === password);
+    const found = users.find(u => u.email === email && u.password === password); //valida si el usuario y contraseña coinciden con el registro
 
     if (!found) {
         alert("Correo o contraseña incorrectos.");
@@ -32,7 +32,7 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
     fetchCharacters();
 });
 
-// Registro de nuevos usuarios (simulado, se guarda en localStorage)
+// Registro de nuevos usuarios 
 document.getElementById('register-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('register-name').value;
@@ -47,21 +47,21 @@ document.getElementById('register-form').addEventListener('submit', function(e) 
     }
 
     users.push({ name, email, password });
-    localStorage.setItem('registeredUsers', JSON.stringify(users));
+    localStorage.setItem('registeredUsers', JSON.stringify(users)); //guarda el nuevo usuario en el localstorage
 
     alert("Cuenta creada con éxito. Ahora puedes iniciar sesión.");
     document.getElementById('register-form').reset();
     showForm('login-form');
 });
 
-// Recuperación de contraseña (simulada, sin backend real)
+// Recuperación de contraseña 
 document.getElementById('recovery-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const email = document.getElementById('recovery-email').value;
     const messageEl = document.getElementById('recovery-message');
 
     const users = getUsers();
-    const found = users.find(u => u.email === email);
+    const found = users.find(u => u.email === email); //busca el usuario por correo
 
     messageEl.style.display = 'block';
 
@@ -85,7 +85,7 @@ function logout() {
 
 // Asegurar que el switch mantenga el estado al recargar
 window.onload = function() {
-    const isDark = localStorage.getItem('darkMode') === 'true';
+    const isDark = localStorage.getItem('darkMode') === 'true'; //valida el estado guardado del tema en el localstorage
     if (isDark) {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').checked = true;
@@ -111,7 +111,7 @@ function showSection(sectionId) {
     document.getElementById(sectionId).style.display = 'block';
 }
 function showForm(formId) {
-    // 1. Ocultar todos los formularios dentro del contenedor de autenticación
+    //Ocultar todos los formularios dentro del contenedor de autenticación
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-form').style.display = 'none';
     document.getElementById('recovery-form').style.display = 'none';
@@ -121,35 +121,34 @@ function showForm(formId) {
     messageEl.style.display = 'none';
     messageEl.textContent = '';
     
-    // 2. Mostrar únicamente el formulario solicitado
+    // muestra únicamente el formulario solicitado
     document.getElementById(formId).style.display = 'block';
 }
 function filterCharacters() {
     const filter = document.getElementById('search-characters').value.toLowerCase();
     
-    // 2. Obtener todas las filas del cuerpo de la tabla
+    //obtiene la tabla de personajes y sus filas
     const tableBody = document.getElementById('character-body');
     const rows = tableBody.getElementsByTagName('tr');
 
-    // 3. Recorrer las filas
     for (let i = 0; i < rows.length; i++) {
-        // Obtenemos el nombre (que está en la segunda columna, índice 1)
+        //busca el valor de la celda con el nombre
         const nameCell = rows[i].getElementsByTagName('td')[1];
         
         if (nameCell) {
             const nameValue = nameCell.textContent.toLowerCase();
             
-            // 4. Mostrar u ocultar la fila según la coincidencia
+            //filtra la fila segun el valor
             if (nameValue.indexOf(filter) > -1) {
-                rows[i].style.display = ""; // Se muestra
+                rows[i].style.display = ""; 
             } else {
-                rows[i].style.display = "none"; // Se oculta
+                rows[i].style.display = "none"; 
             }
         }
     }
 }
 
-// Buscador de episodios (misma lógica que el de personajes)
+// Buscador de episodios
 function filterEpisodes() {
     const filter = document.getElementById('search-episodes').value.toLowerCase();
 
@@ -170,7 +169,7 @@ function filterEpisodes() {
         }
     }
 }
-// Función de ordenamiento
+// ordenamiento burbuja
 function sortTable(n, type) {
     const table = document.getElementById(type);
     let rows, switching, i, x, y, shouldSwitch, dir = "asc", switchcount = 0;
@@ -182,16 +181,26 @@ function sortTable(n, type) {
             shouldSwitch = false;
             x = rows[i].getElementsByTagName("TD")[n];
             y = rows[i + 1].getElementsByTagName("TD")[n];
+
+            // Obtener los valores como texto
+            const xVal = x.innerHTML.toLowerCase();
+            const yVal = y.innerHTML.toLowerCase();
+
+            // Si ambos valores son numéricos, comparar como número 
+            const xNum = parseFloat(xVal);
+            const yNum = parseFloat(yVal);
+            const bothNumeric = !isNaN(xNum) && !isNaN(yNum);
+
             if (dir == "asc") {
-                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+                if (bothNumeric ? (xNum > yNum) : (xVal > yVal)) { shouldSwitch = true; break; } //hace la comparacion de los valores y fija si debe cambiarse o no
             } else if (dir == "desc") {
-                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch = true; break; }
+                if (bothNumeric ? (xNum < yNum) : (xVal < yVal)) { shouldSwitch = true; break; }
             }
         }
-        if (shouldSwitch) {
+        if (shouldSwitch) {// si es true hace el cambio de posicon de filas
             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
             switching = true;
-            switchcount ++;
+            switchcount++;
         } else {
             if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; }
         }
@@ -199,23 +208,23 @@ function sortTable(n, type) {
 }
 let allCharacters = []; // Variable global para guardar datos
 let allEpisodes = []; // Variable global para guardar datos de episodios
-// Nueva lógica de fetch con Resiliencia
+
 async function fetchCharacters() {
     const body = document.getElementById('character-body');
     
     try {
-        // 1. Intentar conectar a la API
+        //conecta a la api
         const res = await fetch('https://rickandmortyapi.com/api/character');
         const data = await res.json();
         
-        // 2. Guardar en localStorage para acceso offline
+        // guarda los datos en localStorage para acceso offline
         localStorage.setItem('cachedCharacters', JSON.stringify(data.results));
         allCharacters = data.results;
         renderCharacters(allCharacters);
         console.log("Datos cargados desde API y guardados en caché.");
         
     } catch (error) {
-        // 3. MODO OFFLINE: Si la API falla, cargar de localStorage
+        //si la API falla, cargar de localStorage
         console.warn("Sin conexión, cargando desde caché...");
         const cachedData = localStorage.getItem('cachedCharacters');
         
@@ -228,7 +237,7 @@ async function fetchCharacters() {
         }
     }
 }
-
+//muestra los personajes en la tabla
 function renderCharacters(chars) {
     const body = document.getElementById('character-body');
     body.innerHTML = chars.map(c => `
@@ -237,6 +246,7 @@ function renderCharacters(chars) {
         </tr>
     `).join('');
 }
+//muestra los episodios en la tabla
 function renderEpisodes(eps) {
     const body = document.getElementById('episodes-body');
     console.log("Renderizando episodios:", eps);
@@ -250,7 +260,7 @@ function renderEpisodes(eps) {
         </tr>
     `).join('');
 }
-
+//modal de detalles de personajes y episodios
 function openDetails(id, type) {
     const data = (type === 'character-modal') ? allCharacters : allEpisodes;
     const item = data.find(c => c.id === id);
@@ -386,7 +396,7 @@ function openDetails(id, type) {
     modal.dataset.type = type;
 }
 
-// Nueva función complementaria para traer los datos del episodio en la vista de personajes
+//carga el preview del episodio del personaje
 async function fetchEpisodePreview(url) {
     const container = document.getElementById('episode-preview-container');
     try {
@@ -415,7 +425,7 @@ async function fetchEpisodePreview(url) {
     }
 }
 
-// Nueva función complementaria para traer los datos del preview
+//  trae los datos del preview
 async function fetchCharacterPreview(url) {
     const container = document.getElementById('character-preview-container');
     try {
@@ -445,21 +455,20 @@ async function fetchCharacterPreview(url) {
 }
 
 function saveChanges() {
-    // 1. Identificar qué modal está visible
+    // identificar qué modal está visible
     const modalCharacter = document.getElementById('character-modal');
     const modalEpisodes = document.getElementById('episodes-modal');
     
-    // Determinamos cuál es el modal activo
+    //determina cual es la modal activa
     const modal = (modalCharacter.style.display === 'flex') ? modalCharacter : modalEpisodes;
     const type = modal.id; // 'character-modal' o 'episodes-modal'
     
-    // 2. Obtener los datos
+    //toma los datos del modal activo
     const id = parseInt(modal.dataset.currentId);
     const newName = document.getElementById('edit-name').value;
     
     console.log(`Guardando en ${type}, ID: ${id}, Nombre: ${newName}`);
 
-    // 3. Lógica de guardado
     if (type === 'character-modal') {
         const char = allCharacters.find(c => c.id == id);
         if (char) {
@@ -477,8 +486,6 @@ function saveChanges() {
             renderEpisodes(allEpisodes);
         }
     }
-    
-    // 4. Cerrar el modal correcto
     modal.style.display = 'none';
 }
 
