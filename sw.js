@@ -1,9 +1,10 @@
-
+// Nombre y versiones de las caches
 const VERSION = 'v1';
 const CACHE_STATIC = `rm-static-${VERSION}`;
 const CACHE_API = `rm-api-${VERSION}`;
 const CACHE_IMAGES = `rm-images-${VERSION}`;
 
+// Archivos base de la aplicacion que se guardan al instalar
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -11,8 +12,9 @@ const STATIC_ASSETS = [
     './script.js'
 ];
 
-// URLs de la API que queremos interceptar y cachear
 const API_HOST = 'rickandmortyapi.com';
+
+// Guardamos los archivos estaticos iniciales
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_STATIC)
@@ -20,7 +22,8 @@ self.addEventListener('install', (event) => {
             .then(() => self.skipWaiting())
     );
 });
-//limpia caches antiguas al activar un nuevo service worker
+
+// Limpia caches viejas cuando actualizamos la version
 self.addEventListener('activate', (event) => {
     const currentCaches = [CACHE_STATIC, CACHE_API, CACHE_IMAGES];
 
@@ -37,39 +40,39 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-//enruta las peticones
+// Escuchamos y filtramos todas las peticiones de la app
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Solo interceptamos peticiones GET
+    // Solo procesamos peticiones de lectura GET
     if (request.method !== 'GET') return;
 
-    // Peticiones a la API de personajes/episodios (listas o items individuales)
+    // Peticiones de datos a la API (personajes, episodios, busquedas)
     if (url.hostname === API_HOST && url.pathname.startsWith('/api/') && !url.pathname.includes('/avatar/')) {
         event.respondWith(networkFirst(request, CACHE_API));
         return;
     }
 
-    //  Imágenes de avatares de personajes
+    // Imagenes de avatares de personajes
     if (url.hostname === API_HOST && url.pathname.includes('/avatar/')) {
         event.respondWith(cacheFirst(request, CACHE_IMAGES));
         return;
     }
 
-    // Archivos propios del proyecto (html, css, js)
+    // Archivos propios del sitio (html, css, js)
     if (url.origin === self.location.origin) {
         event.respondWith(cacheFirst(request, CACHE_STATIC));
         return;
     }
 
-    // Cualquier otra petición: intenta red, sin forzar cacheo
+    // Cualquier otra cosa intenta red primero y luego cache
     event.respondWith(
         fetch(request).catch(() => caches.match(request))
     );
 });
 
-// si la red falla intenta con la cache 
+// Intenta traer de la red; si hay exito guarda una copia, si falla busca en la cache
 async function networkFirst(request, cacheName) {
     const cache = await caches.open(cacheName);
 
@@ -84,7 +87,6 @@ async function networkFirst(request, cacheName) {
         if (cachedResponse) {
             return cachedResponse;
         }
-        // No hay red ni caché disponible
         return new Response(
             JSON.stringify({ error: 'Sin conexión y sin datos en caché.' }),
             { status: 503, headers: { 'Content-Type': 'application/json' } }
@@ -92,7 +94,7 @@ async function networkFirst(request, cacheName) {
     }
 }
 
-// Usa la caché si existe; si no, va a la red y guarda el resultado
+// Busca primero en cache; si no esta, lo descarga y lo guarda para la proxima
 async function cacheFirst(request, cacheName) {
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
@@ -108,6 +110,6 @@ async function cacheFirst(request, cacheName) {
         }
         return networkResponse;
     } catch (error) {
-        return cachedResponse; // undefined si tampoco había nada en caché
+        return cachedResponse;
     }
 }

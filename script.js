@@ -1,4 +1,4 @@
-// Registro del Service Worker para funcionamiento offline
+// Registrar el Service Worker para que todo funcione offline
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -7,41 +7,39 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-//usuarios registrados 
+// Obtener usuarios guardados para el inicio de sesion
 function getUsers() {
-    const stored = localStorage.getItem('registeredUsers'); //obtiene los usuarios del localstorage 
+    const stored = localStorage.getItem('registeredUsers'); 
     if (stored) return JSON.parse(stored);
-    // Usuario de prueba por defecto
+    
+    // Usuario por defecto para pruebas
     const defaultUsers = [{ name: "Admin", email: "admin@rm.com", password: "1234" }];
     localStorage.setItem('registeredUsers', JSON.stringify(defaultUsers));
     return defaultUsers;
 }
 
-// Al hacer Login, validamos contra los usuarios registrados
+// Login de usuario
 document.getElementById('login-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
     const users = getUsers();
-    const found = users.find(u => u.email === email && u.password === password); //valida si el usuario y contraseña coinciden con el registro
+    const found = users.find(u => u.email === email && u.password === password);
 
     if (!found) {
         alert("Correo o contraseña incorrectos.");
         return;
     }
 
-    // Ocultar Auth
     document.getElementById('auth-container').style.display = 'none';
-
-    // Mostrar Nav y Módulo
     document.getElementById('navbar').style.display = 'flex';
     document.getElementById('character-module').style.display = 'block';
 
     fetchCharacters();
 });
 
-// Registro de nuevos usuarios 
+// Registro de usuarios nuevos
 document.getElementById('register-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('register-name').value;
@@ -56,21 +54,21 @@ document.getElementById('register-form').addEventListener('submit', function(e) 
     }
 
     users.push({ name, email, password });
-    localStorage.setItem('registeredUsers', JSON.stringify(users)); //guarda el nuevo usuario en el localstorage
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
 
     alert("Cuenta creada con éxito. Ahora puedes iniciar sesión.");
     document.getElementById('register-form').reset();
     showForm('login-form');
 });
 
-// Recuperación de contraseña 
+// Mostrar la contraseña guardada si olvida sus datos
 document.getElementById('recovery-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const email = document.getElementById('recovery-email').value;
     const messageEl = document.getElementById('recovery-message');
 
     const users = getUsers();
-    const found = users.find(u => u.email === email); //busca el usuario por correo
+    const found = users.find(u => u.email === email);
 
     messageEl.style.display = 'block';
 
@@ -83,7 +81,7 @@ document.getElementById('recovery-form').addEventListener('submit', function(e) 
     }
 });
 
-// Función de salida (Logout)
+// Cerrar sesion
 function logout() {
     document.getElementById('auth-container').style.display = 'block';
     document.getElementById('navbar').style.display = 'none';
@@ -92,9 +90,9 @@ function logout() {
     document.getElementById('episodes-module').style.display = 'none';
 }
 
-// Asegurar que el switch mantenga el estado al recargar
+// Mantener la preferencia de modo oscuro al recargar
 window.onload = function() {
-    const isDark = localStorage.getItem('darkMode') === 'true'; //valida el estado guardado del tema en el localstorage
+    const isDark = localStorage.getItem('darkMode') === 'true';
     if (isDark) {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').checked = true;
@@ -106,11 +104,10 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
 }
 
+// Cambiar entre la vista de Personajes y Episodios
 function showSection(sectionId) {
-    // Ocultar todas las secciones
     document.getElementById('character-module').style.display = 'none';
     document.getElementById('episodes-module').style.display = 'none';
-    // Mostrar la sección solicitada
     
     if (sectionId === 'character-module') {
         fetchCharacters();
@@ -119,70 +116,56 @@ function showSection(sectionId) {
     }
     document.getElementById(sectionId).style.display = 'block';
 }
+
+// Alternar entre formularios de login, registro y recuperacion
 function showForm(formId) {
-    //Ocultar todos los formularios dentro del contenedor de autenticación
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-form').style.display = 'none';
     document.getElementById('recovery-form').style.display = 'none';
     
-    // Limpiar el mensaje de recuperación al cambiar de formulario
     const messageEl = document.getElementById('recovery-message');
     messageEl.style.display = 'none';
     messageEl.textContent = '';
     
-    // muestra únicamente el formulario solicitado
     document.getElementById(formId).style.display = 'block';
 }
+
+// Filtro instantaneo en la tabla de personajes
 function filterCharacters() {
     const filter = document.getElementById('search-characters').value.toLowerCase();
-    
-    //obtiene la tabla de personajes y sus filas
     const tableBody = document.getElementById('character-body');
     const rows = tableBody.getElementsByTagName('tr');
 
     for (let i = 0; i < rows.length; i++) {
-        //busca el valor de la celda con el nombre
         const nameCell = rows[i].getElementsByTagName('td')[1];
-        
         if (nameCell) {
             const nameValue = nameCell.textContent.toLowerCase();
-            
-            //filtra la fila segun el valor
-            if (nameValue.indexOf(filter) > -1) {
-                rows[i].style.display = ""; 
-            } else {
-                rows[i].style.display = "none"; 
-            }
+            rows[i].style.display = nameValue.includes(filter) ? "" : "none";
         }
     }
 }
 
-// Buscador de episodios
+// Filtro instantaneo en la tabla de episodios
 function filterEpisodes() {
     const filter = document.getElementById('search-episodes').value.toLowerCase();
-
     const tableBody = document.getElementById('episodes-body');
     const rows = tableBody.getElementsByTagName('tr');
 
     for (let i = 0; i < rows.length; i++) {
         const nameCell = rows[i].getElementsByTagName('td')[1];
-
         if (nameCell) {
             const nameValue = nameCell.textContent.toLowerCase();
-
-            if (nameValue.indexOf(filter) > -1) {
-                rows[i].style.display = "";
-            } else {
-                rows[i].style.display = "none";
-            }
+            rows[i].style.display = nameValue.includes(filter) ? "" : "none";
         }
     }
 }
-// ordenamiento burbuja
+
+// Ordenamiento burbuja de columnas
 function sortTable(n, type) {
     const table = document.getElementById(type);
     let rows, switching, i, x, y, shouldSwitch, dir = "asc", switchcount = 0;
     switching = true;
+    
     while (switching) {
         switching = false;
         rows = table.rows;
@@ -191,22 +174,20 @@ function sortTable(n, type) {
             x = rows[i].getElementsByTagName("TD")[n];
             y = rows[i + 1].getElementsByTagName("TD")[n];
 
-            // Obtener los valores como texto
             const xVal = x.innerHTML.toLowerCase();
             const yVal = y.innerHTML.toLowerCase();
 
-            // Si ambos valores son numéricos, comparar como número 
             const xNum = parseFloat(xVal);
             const yNum = parseFloat(yVal);
             const bothNumeric = !isNaN(xNum) && !isNaN(yNum);
 
             if (dir == "asc") {
-                if (bothNumeric ? (xNum > yNum) : (xVal > yVal)) { shouldSwitch = true; break; } //hace la comparacion de los valores y fija si debe cambiarse o no
+                if (bothNumeric ? (xNum > yNum) : (xVal > yVal)) { shouldSwitch = true; break; }
             } else if (dir == "desc") {
                 if (bothNumeric ? (xNum < yNum) : (xVal < yVal)) { shouldSwitch = true; break; }
             }
         }
-        if (shouldSwitch) {// si es true hace el cambio de posicon de filas
+        if (shouldSwitch) {
             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
             switching = true;
             switchcount++;
@@ -215,38 +196,29 @@ function sortTable(n, type) {
         }
     }
 }
-let allCharacters = []; // Variable global para guardar datos
-let allEpisodes = []; // Variable global para guardar datos de episodios
 
+let allCharacters = []; 
+let allEpisodes = []; 
+
+// Cargar personajes delegando el cacheo al Service Worker
 async function fetchCharacters() {
     const body = document.getElementById('character-body');
     
     try {
-        //conecta a la api
         const res = await fetch('https://rickandmortyapi.com/api/character');
-        const data = await res.json();
+        if (!res.ok) throw new Error("Error en la respuesta");
         
-        // guarda los datos en localStorage para acceso offline
-        localStorage.setItem('cachedCharacters', JSON.stringify(data.results));
+        const data = await res.json();
         allCharacters = data.results;
         renderCharacters(allCharacters);
-        console.log("Datos cargados desde API y guardados en caché.");
         
     } catch (error) {
-        //si la API falla, cargar de localStorage
-        console.warn("Sin conexión, cargando desde caché...");
-        const cachedData = localStorage.getItem('cachedCharacters');
-        
-        if (cachedData) {
-            allCharacters = JSON.parse(cachedData);
-            renderCharacters(allCharacters);
-            alert("Estás trabajando en modo offline con datos guardados.");
-        } else {
-            body.innerHTML = "<tr><td colspan='5'>No hay datos disponibles sin conexión.</td></tr>";
-        }
+        console.warn("Error de red o sin datos en cache para personajes:", error);
+        body.innerHTML = "<tr><td colspan='5'>No hay datos disponibles sin conexión.</td></tr>";
     }
 }
-//muestra los personajes en la tabla
+
+// Renderizar filas de la tabla de personajes
 function renderCharacters(chars) {
     const body = document.getElementById('character-body');
     body.innerHTML = chars.map(c => `
@@ -255,12 +227,49 @@ function renderCharacters(chars) {
         </tr>
     `).join('');
 }
-//muestra los episodios en la tabla
+
+// Cargar episodios y hacer precarga de personajes para el SW
+async function fetchEpisodes() {
+    const body = document.getElementById('episodes-body');
+    
+    try {
+        const res = await fetch('https://rickandmortyapi.com/api/episode');
+        if (!res.ok) throw new Error("Error en la respuesta");
+
+        const data = await res.json();
+        allEpisodes = data.results;
+        renderEpisodes(allEpisodes);
+
+        // Precarga de todos los personajes del episodio para que el SW los cachee en segundo plano
+        allEpisodes.forEach(episode => {
+            if (episode.characters && episode.characters.length > 0) {
+                episode.characters.forEach(async (characterUrl) => {
+                    try {
+                        const charRes = await fetch(characterUrl);
+                        if (!charRes.ok) return;
+                        const charData = await charRes.json();
+                        
+                        // Pedir el avatar para que el SW lo ponga en CACHE_IMAGES
+                        if (charData.image) {
+                            fetch(charData.image).catch(() => {});
+                        }
+                    } catch (e) {
+                        // Evita mostrar errores si algo falla durante la precarga
+                    }
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.warn("Error de red o sin datos en cache para episodios:", error);
+        body.innerHTML = "<tr><td colspan='4'>No hay datos disponibles sin conexión.</td></tr>";
+    }
+}
+
+// Renderizar filas de la tabla de episodios
 function renderEpisodes(eps) {
     const body = document.getElementById('episodes-body');
-    console.log("Renderizando episodios:", eps);
     body.innerHTML = eps.map(e => `
-       
         <tr onclick="openDetails(${e.id}, 'episodes-modal')" style="cursor:pointer;">
             <td>${e.id}</td>
             <td>${e.name}</td>
@@ -269,7 +278,8 @@ function renderEpisodes(eps) {
         </tr>
     `).join('');
 }
-//modal de detalles de personajes y episodios
+
+// Abrir modales con los detalles
 function openDetails(id, type) {
     const data = (type === 'character-modal') ? allCharacters : allEpisodes;
     const item = data.find(c => c.id === id);
@@ -277,8 +287,6 @@ function openDetails(id, type) {
     
     if (type === 'character-modal') {
         const modalBody = document.getElementById('modal-body-characters');
-        
-        // Determinar color del indicador de estado
         const statusColor = item.status === 'Alive' ? '#97ce4c' : item.status === 'Dead' ? '#ff7675' : '#style-disabled';
 
         modalBody.innerHTML = `
@@ -325,7 +333,6 @@ function openDetails(id, type) {
                 </div>
             </div>
 
-            <!-- Preview Dinámico: Primer episodio en el que debutó -->
             <div style="margin-top: 15px; text-align: left;">
                 <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; opacity: 0.6;">Debut del Personaje</span>
                 <div id="episode-preview-container">
@@ -336,7 +343,6 @@ function openDetails(id, type) {
             </div>
         `;
 
-        // Hacer fetch al primer episodio del arreglo (debut)
         if (item.episode && item.episode.length > 0) {
             fetchEpisodePreview(item.episode[0]);
         } else {
@@ -347,7 +353,6 @@ function openDetails(id, type) {
         }
 
     } else {
-        // Lógica de episodios (mantén la que hicimos en el paso anterior)
         const modalBody = document.getElementById('modal-body-episodes');
         const creationDate = new Date(item.created).toLocaleString('es-ES', {
             year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -394,6 +399,7 @@ function openDetails(id, type) {
             </div>
         `;
 
+        // Selección aleatoria del personaje destacado
         if (item.characters && item.characters.length > 0) {
             const randomUrl = item.characters[Math.floor(Math.random() * item.characters.length)];
             fetchCharacterPreview(randomUrl);
@@ -405,7 +411,7 @@ function openDetails(id, type) {
     modal.dataset.type = type;
 }
 
-//carga el preview del episodio del personaje
+// Cargar vista previa del episodio de debut
 async function fetchEpisodePreview(url) {
     const container = document.getElementById('episode-preview-container');
     try {
@@ -434,7 +440,7 @@ async function fetchEpisodePreview(url) {
     }
 }
 
-//  trae los datos del preview
+// Cargar vista previa del personaje destacado en el modal de episodio
 async function fetchCharacterPreview(url) {
     const container = document.getElementById('character-preview-container');
     try {
@@ -463,20 +469,16 @@ async function fetchCharacterPreview(url) {
     }
 }
 
+// Guardar ediciones locales hechas en las modales
 function saveChanges() {
-    // identificar qué modal está visible
     const modalCharacter = document.getElementById('character-modal');
     const modalEpisodes = document.getElementById('episodes-modal');
     
-    //determina cual es la modal activa
     const modal = (modalCharacter.style.display === 'flex') ? modalCharacter : modalEpisodes;
-    const type = modal.id; // 'character-modal' o 'episodes-modal'
+    const type = modal.id;
     
-    //toma los datos del modal activo
     const id = parseInt(modal.dataset.currentId);
     const newName = document.getElementById('edit-name').value;
-    
-    console.log(`Guardando en ${type}, ID: ${id}, Nombre: ${newName}`);
 
     if (type === 'character-modal') {
         const char = allCharacters.find(c => c.id == id);
@@ -496,33 +498,4 @@ function saveChanges() {
         }
     }
     modal.style.display = 'none';
-}
-
-async function fetchEpisodes() {
-    const body = document.getElementById('episodes-body');
-    
-    try {
-        // 1. Intentar conectar a la API
-        const res = await fetch('https://rickandmortyapi.com/api/episode');
-        const data = await res.json();
-        
-        // 2. Guardar en localStorage para acceso offline
-        localStorage.setItem('cachedEpisodes', JSON.stringify(data.results));
-        allEpisodes = data.results;
-        renderEpisodes(allEpisodes);
-        console.log("Datos cargados desde API y guardados en caché.");
-        
-    } catch (error) {
-        // 3. MODO OFFLINE: Si la API falla, cargar de localStorage
-        console.warn("Sin conexión, cargando desde caché...");
-        const cachedData = localStorage.getItem('cachedEpisodes');
-        
-        if (cachedData) {
-            allEpisodes = JSON.parse(cachedData);
-            renderEpisodes(allEpisodes);
-            alert("Estás trabajando en modo offline con datos guardados.");
-        } else {
-            body.innerHTML = "<tr><td colspan='4'>No hay datos disponibles sin conexión.</td></tr>";
-        }
-    }
 }
