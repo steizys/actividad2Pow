@@ -228,7 +228,7 @@ function renderCharacters(chars) {
     `).join('');
 }
 
-// Cargar episodios y hacer precarga de personajes para el SW
+// Cargar episodios y precargar sus personajes para el Service Worker
 async function fetchEpisodes() {
     const body = document.getElementById('episodes-body');
     
@@ -240,7 +240,7 @@ async function fetchEpisodes() {
         allEpisodes = data.results;
         renderEpisodes(allEpisodes);
 
-        // Precarga de todos los personajes del episodio para que el SW los cachee en segundo plano
+        // Precarga de personajes e imagenes en segundo plano
         allEpisodes.forEach(episode => {
             if (episode.characters && episode.characters.length > 0) {
                 episode.characters.forEach(async (characterUrl) => {
@@ -249,12 +249,12 @@ async function fetchEpisodes() {
                         if (!charRes.ok) return;
                         const charData = await charRes.json();
                         
-                        // Pedir el avatar para que el SW lo ponga en CACHE_IMAGES
+                        // Guarda la imagen en CACHE_IMAGES mediante el SW
                         if (charData.image) {
                             fetch(charData.image).catch(() => {});
                         }
                     } catch (e) {
-                        // Evita mostrar errores si algo falla durante la precarga
+                        // Ignorar errores durante la precarga silenciosa
                     }
                 });
             }
@@ -279,7 +279,7 @@ function renderEpisodes(eps) {
     `).join('');
 }
 
-// Abrir modales con los detalles
+// Abrir modales con detalles
 function openDetails(id, type) {
     const data = (type === 'character-modal') ? allCharacters : allEpisodes;
     const item = data.find(c => c.id === id);
@@ -399,7 +399,7 @@ function openDetails(id, type) {
             </div>
         `;
 
-        // Selección aleatoria del personaje destacado
+        // Elegir personaje aleatorio
         if (item.characters && item.characters.length > 0) {
             const randomUrl = item.characters[Math.floor(Math.random() * item.characters.length)];
             fetchCharacterPreview(randomUrl);
@@ -440,36 +440,50 @@ async function fetchEpisodePreview(url) {
     }
 }
 
-// Cargar vista previa del personaje destacado en el modal de episodio
+// Cargar vista previa del personaje destacado con respuesta garantizada offline
 async function fetchCharacterPreview(url) {
     const container = document.getElementById('character-preview-container');
+    const charId = parseInt(url.split('/').pop());
+
     try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error("Error de red");
         const char = await res.json();
         
-        container.innerHTML = `
-            <div class="preview-card">
-                <img src="${char.image}" alt="${char.name}">
-                <div class="preview-info">
-                    <span style="font-weight: 800; font-size: 1.05rem;">${char.name}</span>
-                    <span style="font-size: 0.85rem; opacity: 0.8;">🧬 ${char.species} — 👤 ${char.gender}</span>
-                    <span style="font-size: 0.8rem; color: ${char.status === 'Alive' ? '#97ce4c' : char.status === 'Dead' ? '#ff7675' : '#ccc'}; font-weight: bold;">
-                        ● ${char.status === 'Alive' ? 'Vivo' : char.status === 'Dead' ? 'Muerto' : 'Desconocido'}
-                    </span>
-                </div>
-            </div>
-        `;
+        renderCharacterCard(char, container);
     } catch (error) {
-        container.innerHTML = `
-            <div class="preview-card" style="justify-content: center; color: #ff7675;">
-                No se pudo cargar la vista previa (Modo Offline).
-            </div>
-        `;
+        // Respaldo offline: buscar el personaje en los datos en memoria si falla el fetch
+        const localChar = allCharacters.find(c => c.id === charId) || allCharacters[0];
+
+        if (localChar) {
+            renderCharacterCard(localChar, container);
+        } else {
+            container.innerHTML = `
+                <div class="preview-card" style="justify-content: center; color: #ff7675;">
+                    Sin vista previa disponible en modo Offline.
+                </div>
+            `;
+        }
     }
 }
 
-// Guardar ediciones locales hechas en las modales
+// Dibujar la tarjeta del personaje dentro del modal
+function renderCharacterCard(char, container) {
+    container.innerHTML = `
+        <div class="preview-card">
+            <img src="${char.image}" alt="${char.name}">
+            <div class="preview-info">
+                <span style="font-weight: 800; font-size: 1.05rem;">${char.name}</span>
+                <span style="font-size: 0.85rem; opacity: 0.8;">🧬 ${char.species} — 👤 ${char.gender}</span>
+                <span style="font-size: 0.8rem; color: ${char.status === 'Alive' ? '#97ce4c' : char.status === 'Dead' ? '#ff7675' : '#ccc'}; font-weight: bold;">
+                    ● ${char.status === 'Alive' ? 'Vivo' : char.status === 'Dead' ? 'Muerto' : 'Desconocido'}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+// Guardar ediciones locales realizadas en las modales
 function saveChanges() {
     const modalCharacter = document.getElementById('character-modal');
     const modalEpisodes = document.getElementById('episodes-modal');
